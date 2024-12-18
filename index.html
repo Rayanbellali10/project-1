@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krusty Krab Tetris</title>
+    <style>
+        body {
+            background-image: url('krusty_krab_background.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        #game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #tetris-board {
+            width: 300px;
+            height: 600px;
+            background-color: rgba(0, 0, 128, 0.8);
+            border: 5px solid #ffd700;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(20, 1fr);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .block {
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .tetromino {
+            position: absolute;
+            background-color: rgba(255, 255, 0, 0.9);
+            border: 1px solid #000;
+        }
+
+        .taken {
+            background-color: rgba(0, 255, 0, 0.9) !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Krusty Krab Tetris</h1>
+    <div id="game-container">
+        <div id="tetris-board"></div>
+    </div>
+    <script>
+        const board = document.getElementById('tetris-board');
+
+        // Generate the grid dynamically
+        for (let i = 0; i < 200; i++) {
+            const block = document.createElement('div');
+            block.classList.add('block');
+            board.appendChild(block);
+        }
+        for (let i = 0; i < 10; i++) {
+            const takenBlock = document.createElement('div');
+            takenBlock.classList.add('block', 'taken');
+            board.appendChild(takenBlock);
+        }
+
+        // Tetromino shapes
+        const tetrominoes = [
+            [1, 11, 21, 2], // L-shape
+            [0, 10, 20, 21], // J-shape
+            [1, 2, 11, 12], // Square
+            [1, 11, 21, 31], // Line
+            [0, 1, 11, 12]  // T-shape
+        ];
+
+        let currentPosition = 4;
+        let currentRotation = 0;
+
+        // Randomly select a tetromino
+        let random = Math.floor(Math.random() * tetrominoes.length);
+        let current = tetrominoes[random];
+
+        // Draw the tetromino
+        function draw() {
+            current.forEach(index => {
+                const block = document.querySelector(`#tetris-board div:nth-child(${currentPosition + index + 1})`);
+                if (block) block.classList.add('tetromino');
+            });
+        }
+
+        // Undraw the tetromino
+        function undraw() {
+            current.forEach(index => {
+                const block = document.querySelector(`#tetris-board div:nth-child(${currentPosition + index + 1})`);
+                if (block) block.classList.remove('tetromino');
+            });
+        }
+
+        // Move the tetromino down
+        function moveDown() {
+            undraw();
+            currentPosition += 10;
+            draw();
+            freeze();
+        }
+
+        // Freeze the tetromino
+        function freeze() {
+            if (current.some(index => document.querySelector(`#tetris-board div:nth-child(${currentPosition + index + 11})`).classList.contains('taken'))) {
+                current.forEach(index => document.querySelector(`#tetris-board div:nth-child(${currentPosition + index + 1})`).classList.add('taken'));
+                // Start a new tetromino
+                random = Math.floor(Math.random() * tetrominoes.length);
+                current = tetrominoes[random];
+                currentPosition = 4;
+                draw();
+            }
+        }
+
+        // Move the tetromino left, unless at the edge or blocked
+        function moveLeft() {
+            undraw();
+            const isAtLeftEdge = current.some(index => (currentPosition + index) % 10 === 0);
+            if (!isAtLeftEdge) currentPosition -= 1;
+            if (current.some(index => document.querySelector(`#tetris-board div:nth-child(${currentPosition + index + 1})`).classList.contains('taken'))) {
+                currentPosition += 1;
+            }
+            draw();
+        }
+
+        // Move the tetromino right, unless at the edge or blocked
+        function moveRight() {
+            undraw();
+            const isAtRightEdge = current.some(index => (currentPosition + index) % 10 === 9);
+            if (!isAtRightEdge) currentPosition += 1;
+            if (current.some(index => document.querySelector(`#tetris-board div:nth-child(${currentPosition + index + 1})`).classList.contains('taken'))) {
+                currentPosition -= 1;
+            }
+            draw();
+        }
+
+        // Rotate the tetromino
+        function rotate() {
+            undraw();
+            currentRotation++;
+            if (currentRotation === 4) currentRotation = 0;
+            current = tetrominoes[random].map(index => (index % 10) + (Math.floor(index / 10) * 10));
+            draw();
+        }
+
+        // Assign functions to keycodes
+        document.addEventListener('keydown', event => {
+            if (event.key === 'ArrowLeft') moveLeft();
+            if (event.key === 'ArrowRight') moveRight();
+            if (event.key === 'ArrowUp') rotate();
+            if (event.key === 'ArrowDown') moveDown();
+        });
+
+        // Start the game loop
+        draw();
+        setInterval(moveDown, 1000);
+    </script>
+</body>
+</html>
